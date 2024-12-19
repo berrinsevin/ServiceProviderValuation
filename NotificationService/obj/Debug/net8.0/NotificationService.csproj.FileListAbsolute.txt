@@ -1,0 +1,5 @@
+C:\Projects\ServiceProviderRating\NotificationService\obj\Debug\net8.0\NotificationService.csproj.AssemblyReference.cache
+C:\Projects\ServiceProviderRating\NotificationService\obj\Debug\net8.0\NotificationService.GeneratedMSBuildEditorConfig.editorconfig
+C:\Projects\ServiceProviderRating\NotificationService\obj\Debug\net8.0\NotificationService.csproj.CoreCompileInputs.cache
+C:\Projects\ServiceProviderRating\NotificationService\obj\Debug\net8.0\NotificationService.MvcApplicationPartsAssemblyInfo.cs
+C:\Projects\ServiceProviderRating\NotificationService\obj\Debug\net8.0\NotificationService.MvcApplicationPartsAssemblyInfo.cache

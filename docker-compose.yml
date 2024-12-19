@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  ratingservice:
+    build:
+      context: .
+      dockerfile: RatingService/Dockerfile
+    container_name: ratingservice
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - RABBITMQ__HOSTNAME=rabbitmq
+      - REDIS__HOSTNAME=redis
+    ports:
+      - "5000:80"   # RatingService Web API
+    depends_on:
+      - rabbitmq
+      - redis
+
+  notificationservice:
+    build:
+      context: .
+      dockerfile: NotificationService/Dockerfile
+    container_name: notificationservice
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - RABBITMQ__HOSTNAME=rabbitmq
+    ports:
+      - "5001:80"   # NotificationService Web API
+    depends_on:
+      - rabbitmq
+
+  rabbitmq:
+    image: "rabbitmq:4.0-management"
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"   # RabbitMQ AMQP port
+      - "15672:15672" # RabbitMQ Management UI
+    environment:
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+    networks:
+      - rating-network
+
+  redis:
+    image: "redis:latest"
+    container_name: redis
+    ports:
+      - "6379:6379"   # Redis port
+    networks:
+      - rating-network
+
+networks:
+  app-network:
+    driver: bridge

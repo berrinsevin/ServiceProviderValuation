@@ -1,0 +1,15 @@
+C:\Projects\ServiceProviderRating\NotificationService\NotificationService.Business\bin\Debug\net8.0\NotificationService.Business.deps.json
+C:\Projects\ServiceProviderRating\NotificationService\NotificationService.Business\bin\Debug\net8.0\NotificationService.Business.dll
+C:\Projects\ServiceProviderRating\NotificationService\NotificationService.Business\bin\Debug\net8.0\NotificationService.Business.pdb
+C:\Projects\ServiceProviderRating\NotificationService\NotificationService.Business\bin\Debug\net8.0\NotificationService.Infrastructure.dll
+C:\Projects\ServiceProviderRating\NotificationService\NotificationService.Business\bin\Debug\net8.0\ServiceProviderRatingNuget.dll
+C:\Projects\ServiceProviderRating\NotificationService\NotificationService.Business\bin\Debug\net8.0\ServiceProviderRatingNuget.pdb
+C:\Projects\ServiceProviderRating\NotificationService\NotificationService.Business\bin\Debug\net8.0\NotificationService.Infrastructure.pdb
+C:\Projects\ServiceProviderRating\NotificationService\NotificationService.Business\obj\Debug\net8.0\NotificationService.Business.csproj.AssemblyReference.cache
+C:\Projects\ServiceProviderRating\NotificationService\NotificationService.Business\obj\Debug\net8.0\NotificationService.Business.GeneratedMSBuildEditorConfig.editorconfig
+C:\Projects\ServiceProviderRating\NotificationService\NotificationService.Business\obj\Debug\net8.0\NotificationService.Business.csproj.CoreCompileInputs.cache
+C:\Projects\ServiceProviderRating\NotificationService\NotificationService.Business\obj\Debug\net8.0\Notifica.976D1C0B.Up2Date
+C:\Projects\ServiceProviderRating\NotificationService\NotificationService.Business\obj\Debug\net8.0\NotificationService.Business.dll
+C:\Projects\ServiceProviderRating\NotificationService\NotificationService.Business\obj\Debug\net8.0\refint\NotificationService.Business.dll
+C:\Projects\ServiceProviderRating\NotificationService\NotificationService.Business\obj\Debug\net8.0\NotificationService.Business.pdb
+C:\Projects\ServiceProviderRating\NotificationService\NotificationService.Business\obj\Debug\net8.0\ref\NotificationService.Business.dll

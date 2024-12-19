@@ -1,0 +1,10 @@
+C:\Projects\ServiceProviderRating\NotificationService\NotificationService.Infrastructure\bin\Debug\net8.0\NotificationService.Infrastructure.deps.json
+C:\Projects\ServiceProviderRating\NotificationService\NotificationService.Infrastructure\bin\Debug\net8.0\NotificationService.Infrastructure.dll
+C:\Projects\ServiceProviderRating\NotificationService\NotificationService.Infrastructure\bin\Debug\net8.0\NotificationService.Infrastructure.pdb
+C:\Projects\ServiceProviderRating\NotificationService\NotificationService.Infrastructure\obj\Debug\net8.0\NotificationService.Infrastructure.csproj.AssemblyReference.cache
+C:\Projects\ServiceProviderRating\NotificationService\NotificationService.Infrastructure\obj\Debug\net8.0\NotificationService.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+C:\Projects\ServiceProviderRating\NotificationService\NotificationService.Infrastructure\obj\Debug\net8.0\NotificationService.Infrastructure.csproj.CoreCompileInputs.cache
+C:\Projects\ServiceProviderRating\NotificationService\NotificationService.Infrastructure\obj\Debug\net8.0\NotificationService.Infrastructure.dll
+C:\Projects\ServiceProviderRating\NotificationService\NotificationService.Infrastructure\obj\Debug\net8.0\refint\NotificationService.Infrastructure.dll
+C:\Projects\ServiceProviderRating\NotificationService\NotificationService.Infrastructure\obj\Debug\net8.0\NotificationService.Infrastructure.pdb
+C:\Projects\ServiceProviderRating\NotificationService\NotificationService.Infrastructure\obj\Debug\net8.0\ref\NotificationService.Infrastructure.dll
