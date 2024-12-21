@@ -16,7 +16,7 @@ This project is a service marketplace that allows users to rate service provider
 - Includes unit tests to ensure system reliability.
 
 ## Technologies:
-- .NET 6.0 for both services
+- .NET 8.0 for both services
 - RabbitMQ for message brokering between services
 - Redis for caching
 - Serilog for structured logging
