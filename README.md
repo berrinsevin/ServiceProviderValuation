@@ -14,6 +14,7 @@ This project is a service marketplace that allows users to rate service provider
 - RabbitMQ is used for communication between the Rating and Notification services.
 - Structured logging with Serilog for easier debugging and monitoring.
 - Includes unit tests to ensure system reliability.
+- Microservice architecture to ensure scalability, modularity, and ease of maintenance.
 
 ## Technologies:
 - .NET 8.0 for both services
