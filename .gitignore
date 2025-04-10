@@ -1,0 +1,46 @@
+## Build artifacts
+bin/
+obj/
+*.exe
+*.dll
+
+## User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Visual Studio Code
+.vscode/
+
+## JetBrains Rider
+.idea/
+*.DotSettings
+
+## NuGet
+*.nupkg
+project.lock.json
+project.assets.json
+project.nuget.cache
+*.csproj.nuget.*
+*.props
+*.cache
+
+## Logs
+*.log
+
+## Others
+*.db
+*.pid
+*.DS_Store
+Thumbs.db
+
+## Test Results
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+
+## Publish
+publish/
+artifacts/

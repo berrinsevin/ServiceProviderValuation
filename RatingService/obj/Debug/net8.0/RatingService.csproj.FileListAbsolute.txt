@@ -1,5 +1,0 @@
-C:\Projects\ServiceProviderRating\RatingService\obj\Debug\net8.0\RatingService.csproj.AssemblyReference.cache
-C:\Projects\ServiceProviderRating\RatingService\obj\Debug\net8.0\RatingService.GeneratedMSBuildEditorConfig.editorconfig
-C:\Projects\ServiceProviderRating\RatingService\obj\Debug\net8.0\RatingService.csproj.CoreCompileInputs.cache
-C:\Projects\ServiceProviderRating\RatingService\obj\Debug\net8.0\RatingService.MvcApplicationPartsAssemblyInfo.cs
-C:\Projects\ServiceProviderRating\RatingService\obj\Debug\net8.0\RatingService.MvcApplicationPartsAssemblyInfo.cache

@@ -1,9 +1,0 @@
-C:\Projects\ServiceProviderRating\NotificationService\NotificationService.Domain\bin\Debug\net8.0\NotificationService.Domain.deps.json
-C:\Projects\ServiceProviderRating\NotificationService\NotificationService.Domain\bin\Debug\net8.0\NotificationService.Domain.dll
-C:\Projects\ServiceProviderRating\NotificationService\NotificationService.Domain\bin\Debug\net8.0\NotificationService.Domain.pdb
-C:\Projects\ServiceProviderRating\NotificationService\NotificationService.Domain\obj\Debug\net8.0\NotificationService.Domain.GeneratedMSBuildEditorConfig.editorconfig
-C:\Projects\ServiceProviderRating\NotificationService\NotificationService.Domain\obj\Debug\net8.0\NotificationService.Domain.csproj.CoreCompileInputs.cache
-C:\Projects\ServiceProviderRating\NotificationService\NotificationService.Domain\obj\Debug\net8.0\NotificationService.Domain.dll
-C:\Projects\ServiceProviderRating\NotificationService\NotificationService.Domain\obj\Debug\net8.0\refint\NotificationService.Domain.dll
-C:\Projects\ServiceProviderRating\NotificationService\NotificationService.Domain\obj\Debug\net8.0\NotificationService.Domain.pdb
-C:\Projects\ServiceProviderRating\NotificationService\NotificationService.Domain\obj\Debug\net8.0\ref\NotificationService.Domain.dll
