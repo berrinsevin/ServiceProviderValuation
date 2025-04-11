@@ -3,15 +3,15 @@ using System.Text;
 using RabbitMQ.Client;
 using System.Text.Json;
 using RabbitMQ.Client.Events;
-using Microsoft.Extensions.Hosting;
+using NotificationService.Infrastructure;
 using NotificationService.Business.Services;
-using ServiceProviderRatingNuget.Domain.Entities;
-using NotificationService.Infrastructure.Messaging;
+using NotificationService.Infrastructure.EventBus;
+
 
 namespace NotificationService.Workers
 {
     /// <summary>
-    /// Worker service to handle rating messages from RabbitMQ and create notifications.
+    /// Worker service to handle rating events from RabbitMQ and create notifications.
     /// </summary>
     public class NotificationWorker : BackgroundService
     {
@@ -38,11 +38,13 @@ namespace NotificationService.Workers
         /// <returns>A task representing the asynchronous operation.</returns>
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            _rabbitMqChannel.ExchangeDeclare("ratings", ExchangeType.Fanout);
             _rabbitMqChannel.QueueDeclare(queue: "rating_queue",
                                           durable: true,
                                           exclusive: false,
                                           autoDelete: false,
                                           arguments: null);
+            _rabbitMqChannel.QueueBind("rating_queue", "ratings", "");
 
             var consumer = new EventingBasicConsumer(_rabbitMqChannel);
             consumer.Received += async (model, ea) =>
@@ -51,21 +53,38 @@ namespace NotificationService.Workers
                 var message = Encoding.UTF8.GetString(body);
                 Log.Information("Received message: {Message}", message);
 
-                var ratingMessage = JsonSerializer.Deserialize<RatingMessage>(message);
-
-                if (ratingMessage == null)
+                RateCreatedEvent? rateEvent;
+                try
                 {
-                    throw new ArgumentException("Failed to deserialize message: {Message}", message); 
+                    rateEvent = JsonSerializer.Deserialize<RateCreatedEvent>(message);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Error deserializing message: {Message}", message);
+                    return;
                 }
 
-                await _notificationService.AddNotificationAsync(new()
+                if (rateEvent == null)
                 {
-                    RatingValue = ratingMessage.RatingValue,
-                    ServiceProviderId = ratingMessage.ServiceProviderId,
-                    UserId = ratingMessage.UserId
-                });
+                    Log.Warning("Deserialized RateCreatedEvent is null. Raw message: {Message}", message);
+                    return;
+                }
 
-                _rabbitMqChannel.BasicAck(deliveryTag: ea.DeliveryTag, multiple: false);
+                try
+                {
+                    await _notificationService.AddNotificationAsync(new()
+                    {
+                        RatingValue = rateEvent.RatingValue,
+                        ServiceProviderId = rateEvent.ServiceProviderId,
+                        UserId = rateEvent.UserId
+                    });
+
+                    _rabbitMqChannel.BasicAck(deliveryTag: ea.DeliveryTag, multiple: false);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Failed to process event for provider {ProviderId}", rateEvent.ServiceProviderId);
+                }
             };
 
             _rabbitMqChannel.BasicConsume(queue: "rating_queue",

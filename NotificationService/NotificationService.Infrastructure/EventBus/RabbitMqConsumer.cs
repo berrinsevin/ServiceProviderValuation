@@ -1,6 +1,6 @@
 using RabbitMQ.Client;
 
-namespace NotificationService.Infrastructure.Messaging
+namespace NotificationService.Infrastructure.EventBus
 {
     public class RabbitMqConnectionFactory
     {

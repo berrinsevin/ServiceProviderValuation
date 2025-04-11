@@ -1,7 +1,10 @@
 ﻿using System.Text;
+using System.Text.Json;
 using RabbitMQ.Client;
+using RatingService.Infrastructure.Eventbus;
+using RatingService.Infrastructure.EventBus.Events;
 
-namespace RatingService.Infrastructure.Messaging
+namespace RatingService.Infrastructure.EventBus
 {
     public class RabbitMqClient
     {
@@ -22,12 +25,22 @@ namespace RatingService.Infrastructure.Messaging
             _connection = factory.CreateConnection();
         }
 
-        public void SendMessage(string message)
+        public void PublishRateCreatedEvent(RateCreatedEvent evt)
         {
             using var channel = _connection.CreateModel();
-            channel.QueueDeclare(queue: _queueName, durable: false, exclusive: false, autoDelete: false, arguments: null);
+
+            // Exchange tanımı
+            channel.ExchangeDeclare(exchange: "ratings", type: ExchangeType.Fanout);
+
+            var message = JsonSerializer.Serialize(evt);
             var body = Encoding.UTF8.GetBytes(message);
-            channel.BasicPublish(exchange: String.Empty   , routingKey: _queueName, basicProperties: null, body: body);
+
+            channel.BasicPublish(
+                exchange: "ratings",
+                routingKey: "",
+                basicProperties: null,
+                body: body);
         }
+
     }
 }

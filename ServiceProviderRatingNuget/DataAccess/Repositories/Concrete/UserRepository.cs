@@ -2,32 +2,29 @@ using ServiceProviderRatingNuget.Domain.Entities;
 
 namespace ServiceProviderRatingNuget.DataAccess.Repositories
 {
-    public class UserRepository : IUserRepository
+    public class UserRepository : Repository<User>, IUserRepository
     {
         private readonly ServiceProviderRatingDbContext _context;
 
-        public UserRepository(ServiceProviderRatingDbContext context)
+        public UserRepository(ServiceProviderRatingDbContext context) : base(context)
         {
             _context = context;
         }
 
-        public async Task<User> GetUserByIdAsync(int userId)
-        {
-            return await _context.Users.FindAsync(userId);
-        }
+        public async Task<User> GetUserByIdAsync(int userId) => await GetByIdAsync(userId);
 
         public async Task AddUserAsync(User user)
         {
-            _context.Users.Add(user);
+            await AddAsync(user);
             await _context.SaveChangesAsync();
         }
 
         public async Task DeleteUserAsync(int userId)
         {
-            var user = await _context.Users.FindAsync(userId);
+            var user = await GetByIdAsync(userId);
             if (user != null)
             {
-                _context.Users.Remove(user);
+                Remove(user);
                 await _context.SaveChangesAsync();
             }
         }
