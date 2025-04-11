@@ -50,13 +50,6 @@ namespace RatingService.Business.Services
                 throw new ArgumentException("ServiceProviderId must be a valid value.", nameof(rating.ServiceProviderId));
             }
 
-            // Normally, UserId should be validated and obtained from the context
-            // However, due to the lack of an authorization mechanism at this point, it is expected that the UserId is provided along with the rating
-            if (rating.UserId <= 0)
-            {
-                throw new ArgumentException("UserId must be a valid value.", nameof(rating.UserId));
-            }
-
             if (!Enum.IsDefined(typeof(RatingValue), rating.RatingValue))
             {
                 throw new ArgumentException("Rating value must be between 1 and 5.", nameof(rating.RatingValue));
@@ -88,9 +81,16 @@ namespace RatingService.Business.Services
                 var db = _redisConnection.GetDatabase();
                 await db.SetAddAsync("rating_keys", key);
 
-                // RabbitMQ notification for NotificationService
-                var notificationMessage = $"New rating added for provider {rating.ServiceProviderId}";
-                _notificationRabbitMqClient.SendMessage(notificationMessage);
+                // RabbitMQ Event Publish
+                var rateEvent = new RateCreatedEvent
+                {
+                    ProviderId = rating.ServiceProviderId,
+                    RatingValue = rating.RatingValue,
+                    UserId = rating.UserId,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _notificationRabbitMqClient.PublishRateCreatedEvent(rateEvent);
             }
             catch (Exception ex)
             {

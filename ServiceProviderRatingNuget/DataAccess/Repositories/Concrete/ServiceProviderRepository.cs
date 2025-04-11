@@ -3,57 +3,48 @@ using ServiceProviderRatingNuget.Domain.Entities;
 
 namespace ServiceProviderRatingNuget.DataAccess.Repositories
 {
-    public class ServiceProviderRepository : IServiceProviderRepository
+    public class ServiceProviderRepository : Repository<Provider>, IServiceProviderRepository
     {
         private readonly ServiceProviderRatingDbContext _context;
 
-        public ServiceProviderRepository(ServiceProviderRatingDbContext context)
+        public ServiceProviderRepository(ServiceProviderRatingDbContext context) : base(context)
         {
             _context = context;
         }
 
         public async Task<IEnumerable<Provider>> GetProvidersAsync()
-        {
-            return await _context.ServiceProviders.ToListAsync();
-        }
+            => await GetAllAsync();
 
         public async Task<Provider> GetProviderByIdAsync(int serviceProviderId)
-        {
-            return await _context.ServiceProviders.FindAsync(serviceProviderId);
-        }
+            => await GetByIdAsync(serviceProviderId);
 
         public async Task<Provider> GetProviderByNameAsync(string serviceProviderName)
-        {
-            return await _context.ServiceProviders.FindAsync(serviceProviderName);
-        }
+            => await _context.ServiceProviders.FirstOrDefaultAsync(p => p.Name == serviceProviderName);
 
         public async Task AddProviderAsync(Provider provider)
         {
-            _context.ServiceProviders.Add(provider);
+            await AddAsync(provider);
             await _context.SaveChangesAsync();
         }
 
         public async Task UpdateProviderAsync(Provider provider)
         {
-            //Update preserving the original RowVersion value in the database 
             _context.Entry(provider).Property("RowVersion").OriginalValue = provider.RowVersion;
-            _context.ServiceProviders.Update(provider);
+            Update(provider);
             await _context.SaveChangesAsync();
         }
 
         public async Task DeleteProviderAsync(int serviceProviderId)
         {
-            var provider = await _context.ServiceProviders.FindAsync(serviceProviderId);
+            var provider = await GetByIdAsync(serviceProviderId);
             if (provider != null)
             {
-                _context.ServiceProviders.Remove(provider);
+                Remove(provider);
                 await _context.SaveChangesAsync();
             }
         }
 
         public async Task<bool> IsProviderWithSameNameExistsAsync(string providerName)
-        {
-            return await _context.ServiceProviders.AnyAsync(p => p.Name == providerName);
-        }
+            => await _context.ServiceProviders.AnyAsync(p => p.Name == providerName);
     }
 }

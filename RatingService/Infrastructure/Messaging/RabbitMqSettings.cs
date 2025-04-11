@@ -1,4 +1,4 @@
-﻿namespace RatingService.Infrastructure.Messaging
+﻿namespace RatingService.Infrastructure.Eventbus
 {
     public class RabbitMqSettings
     {

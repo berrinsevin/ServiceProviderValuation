@@ -3,11 +3,11 @@ using ServiceProviderRatingNuget.Domain.Entities;
 
 namespace ServiceProviderRatingNuget.DataAccess.Repositories
 {
-    public class NotificationRepository : INotificationRepository
+    public class NotificationRepository : Repository<Notification>, INotificationRepository
     {
         private readonly ServiceProviderRatingDbContext _context;
 
-        public NotificationRepository(ServiceProviderRatingDbContext context)
+        public NotificationRepository(ServiceProviderRatingDbContext context) : base(context)
         {
             _context = context;
         }
@@ -16,12 +16,13 @@ namespace ServiceProviderRatingNuget.DataAccess.Repositories
         {
             return await _context.Notifications
                 .Where(n => n.CreatedDate > lastFetchTime)
+                .AsNoTracking()
                 .ToListAsync();
         }
 
         public async Task AddNotificationAsync(Notification notification)
         {
-            _context.Notifications.Add(notification);
+            await AddAsync(notification);
             await _context.SaveChangesAsync();
         }
 
@@ -30,6 +31,7 @@ namespace ServiceProviderRatingNuget.DataAccess.Repositories
             var notification = await _context.Notifications.FindAsync(notificationId);
             if (notification != null)
             {
+                Update(notification);
                 await _context.SaveChangesAsync();
             }
         }
