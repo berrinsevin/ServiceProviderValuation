@@ -15,6 +15,13 @@ services:
     depends_on:
       - rabbitmq
       - redis
+    networks:
+      - rating-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
 
   notificationservice:
     build:
@@ -28,6 +35,13 @@ services:
       - "5001:80"   # NotificationService Web API
     depends_on:
       - rabbitmq
+    networks:
+      - rating-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
 
   rabbitmq:
     image: "rabbitmq:4.0-management"
@@ -40,6 +54,11 @@ services:
       RABBITMQ_PASSWORD: guest
     networks:
       - rating-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
 
   redis:
     image: "redis:latest"
@@ -48,7 +67,12 @@ services:
       - "6379:6379"   # Redis port
     networks:
       - rating-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
 
 networks:
-  app-network:
+  rating-network:
     driver: bridge
