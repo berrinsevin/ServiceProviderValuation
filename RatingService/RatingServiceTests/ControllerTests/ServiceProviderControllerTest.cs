@@ -5,97 +5,161 @@ using RatingService.Business.Services;
 using ServiceProviderRatingNuget.Domain.Entities;
 using Xunit;
 
-public class ProviderControllerTests
+namespace RatingService.Tests
 {
-    private readonly Mock<IProviderService> _mockProviderService;
-    private readonly ProviderController _controller;
-
-    public ProviderControllerTests()
+    public class ServiceProviderControllerTests
     {
-        _mockProviderService = new Mock<IProviderService>();
-        _controller = new ProviderController(_mockProviderService.Object);
-    }
+        private readonly Mock<IProviderService> _mockProviderService;
+        private readonly ServiceProviderController _controller;
 
-    [Fact]
-    public async Task GetProviders_ReturnsOkResult_WithListOfProviders()
-    {
-        var providers = new List<ProviderDto>
+        public ServiceProviderControllerTests()
         {
-            new ProviderDto { Id = 1, Name = "Provider 1" },
-            new ProviderDto { Id = 2, Name = "Provider 2" }
-        };
+            _mockProviderService = new Mock<IProviderService>();
+            _controller = new ServiceProviderController(_mockProviderService.Object);
+        }
 
-        _mockProviderService.Setup(service => service.GetProvidersAsync()).Returns(Task.FromResult((IEnumerable<Provider>)providers));
+        [Fact]
+        public async Task GetServiceProvider_ReturnsOkResult_WithServiceProvider()
+        {
+            // Arrange
+            var serviceProviderId = 1;
+            var serviceProvider = new ServiceProvider
+            {
+                Id = serviceProviderId,
+                Name = "Test Provider",
+                Description = "Test Description"
+            };
 
-        var result = await _controller.GetProviders();
+            _mockProviderService
+                .Setup(service => service.GetServiceProviderAsync(serviceProviderId))
+                .ReturnsAsync(serviceProvider);
 
-        var okResult = Assert.IsType<OkObjectResult>(result);
-        var returnValue = Assert.IsType<List<ProviderDto>>(okResult.Value);
-        Assert.Equal(providers.Count, returnValue.Count);
-    }
+            // Act
+            var result = await _controller.GetServiceProvider(serviceProviderId);
 
-    [Fact]
-    public async Task GetProviderById_ReturnsOkResult_WithProvider()
-    {
-        var provider = new Provider { Id = 1, Name = "Provider 1" };
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var returnValue = Assert.IsType<ServiceProviderDto>(okResult.Value);
+            Assert.Equal(serviceProviderId, returnValue.Id);
+            Assert.Equal(serviceProvider.Name, returnValue.Name);
+            Assert.Equal(serviceProvider.Description, returnValue.Description);
+        }
 
-        _mockProviderService.Setup(service => service.GetProviderByIdAsync(1)).Returns(Task.FromResult(provider));
+        [Fact]
+        public async Task GetServiceProvider_ReturnsNotFound_WhenServiceProviderNotFound()
+        {
+            // Arrange
+            var serviceProviderId = 1;
+            _mockProviderService
+                .Setup(service => service.GetServiceProviderAsync(serviceProviderId))
+                .ReturnsAsync((ServiceProvider)null);
 
-        var result = await _controller.GetProviderById(1);
+            // Act
+            var result = await _controller.GetServiceProvider(serviceProviderId);
 
-        var okResult = Assert.IsType<OkObjectResult>(result);
-        var returnValue = Assert.IsType<ProviderDto>(okResult.Value);
-        Assert.Equal(provider.Id, returnValue.Id);
-    }
+            // Assert
+            var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
+            Assert.Equal("Service provider not found.", notFoundResult.Value);
+        }
 
-    [Fact]
-    public async Task GetProviderById_ReturnsNotFound_WhenProviderDoesNotExist()
-    {
-        _mockProviderService.Setup(service => service.GetProviderByIdAsync(1)).ReturnsAsync((Provider)null);
+        [Fact]
+        public async Task GetServiceProvider_ReturnsBadRequest_WhenIdIsInvalid()
+        {
+            // Arrange
+            var invalidId = 0;
 
-        var result = await _controller.GetProviderById(1);
+            // Act
+            var result = await _controller.GetServiceProvider(invalidId);
 
-        Assert.IsType<NotFoundResult>(result);
-    }
+            // Assert
+            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.Equal("Invalid service provider ID.", badRequestResult.Value);
+        }
 
-    [Fact]
-    public async Task AddProvider_ReturnsCreatedAtAction_WhenProviderIsAdded()
-    {
-        var provider = new Provider { Id = 1, Name = "Provider 1" };
-        var providerDto = new ProviderDto { Id = 1, Name = "Provider 1" };
+        [Fact]
+        public async Task AddServiceProvider_ReturnsOkResult_WhenServiceProviderIsAdded()
+        {
+            // Arrange
+            var serviceProviderDto = new ServiceProviderDto
+            {
+                Name = "Test Provider",
+                Description = "Test Description"
+            };
 
-        _mockProviderService.Setup(service => service.AddProviderAsync(It.IsAny<ProviderDto>())).Returns(Task.FromResult(provider));
+            // Act
+            var result = await _controller.AddServiceProvider(serviceProviderDto);
 
-        var result = await _controller.AddProvider(providerDto);
+            // Assert
+            var okResult = Assert.IsType<OkResult>(result);
+            _mockProviderService.Verify(service => service.AddServiceProviderAsync(serviceProviderDto), Times.Once);
+        }
 
-        var createdAtActionResult = Assert.IsType<CreatedAtActionResult>(result);
-        var returnValue = Assert.IsType<ProviderDto>(createdAtActionResult.Value);
-        Assert.Equal(provider.Id, returnValue.Id);
-    }
+        [Fact]
+        public async Task AddServiceProvider_ReturnsBadRequest_WhenServiceProviderIsNull()
+        {
+            // Act
+            var result = await _controller.AddServiceProvider(null);
 
-    [Fact]
-    public async Task AddProvider_ReturnsBadRequest_WhenInvalidOperationExceptionOccurs()
-    {
-        var provider = new ProviderDto { Id = 1, Name = "Provider 1" };
+            // Assert
+            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.Equal("Service provider cannot be null.", badRequestResult.Value);
+        }
 
-        _mockProviderService.Setup(service => service.AddProviderAsync(provider)).ThrowsAsync(new InvalidOperationException("Invalid operation"));
+        [Fact]
+        public async Task AddServiceProvider_ReturnsBadRequest_WhenServiceProviderIsInvalid()
+        {
+            // Arrange
+            var invalidServiceProvider = new ServiceProviderDto
+            {
+                Name = "", // Invalid name
+                Description = "Test Description"
+            };
 
-        var result = await _controller.AddProvider(provider);
+            // Act
+            var result = await _controller.AddServiceProvider(invalidServiceProvider);
 
-        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-        var returnValue = Assert.IsType<string>(badRequestResult.Value);
-        Assert.Equal("Invalid operation", returnValue);
-    }
+            // Assert
+            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.Equal("Invalid service provider data.", badRequestResult.Value);
+        }
 
-    [Fact]
-    public async Task DeleteProvider_ReturnsNoContent_WhenProviderIsDeleted()
-    {
-        var providerId = 1;
+        [Fact]
+        public async Task GetAllServiceProviders_ReturnsOkResult_WithServiceProviders()
+        {
+            // Arrange
+            var serviceProviders = new List<ServiceProvider>
+            {
+                new ServiceProvider { Id = 1, Name = "Provider 1", Description = "Description 1" },
+                new ServiceProvider { Id = 2, Name = "Provider 2", Description = "Description 2" }
+            };
 
-        _mockProviderService.Setup(service => service.DeleteProviderAsync(providerId)).Returns(Task.CompletedTask);
+            _mockProviderService
+                .Setup(service => service.GetAllServiceProvidersAsync())
+                .ReturnsAsync(serviceProviders);
 
-        var result = await _controller.DeleteProvider(providerId);
+            // Act
+            var result = await _controller.GetAllServiceProviders();
 
-        Assert.IsType<NoContentResult>(result);
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var returnValue = Assert.IsType<List<ServiceProviderDto>>(okResult.Value);
+            Assert.Equal(2, returnValue.Count);
+        }
+
+        [Fact]
+        public async Task GetAllServiceProviders_ReturnsNotFound_WhenNoServiceProvidersFound()
+        {
+            // Arrange
+            _mockProviderService
+                .Setup(service => service.GetAllServiceProvidersAsync())
+                .ReturnsAsync(new List<ServiceProvider>());
+
+            // Act
+            var result = await _controller.GetAllServiceProviders();
+
+            // Assert
+            var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
+            Assert.Equal("No service providers found.", notFoundResult.Value);
+        }
     }
 }

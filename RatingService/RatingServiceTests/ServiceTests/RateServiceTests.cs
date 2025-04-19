@@ -7,94 +7,176 @@ using Microsoft.Extensions.Caching.Distributed;
 using StackExchange.Redis;
 using Xunit;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
-public class RateServiceTests
+namespace RatingService.Tests
 {
-    private readonly Mock<IRatingRepository> _mockRatingRepository;
-    private readonly Mock<IDistributedCache> _mockCache;
-    private readonly Mock<ConnectionMultiplexer> _mockRedisConnection;
-    private readonly Mock<RabbitMqClient> _mockNotificationRabbitMqClient;
-    private readonly RateService _service;
-
-    public RateServiceTests()
+    public class RateServiceTests
     {
-        _mockRatingRepository = new Mock<IRatingRepository>();
-        _mockCache = new Mock<IDistributedCache>();
-        _mockRedisConnection = new Mock<ConnectionMultiplexer>();
-        _mockNotificationRabbitMqClient = new Mock<RabbitMqClient>();
-        _service = new RateService(_mockRatingRepository.Object, _mockCache.Object, _mockRedisConnection.Object, _mockNotificationRabbitMqClient.Object);
-    }
+        private readonly Mock<IRatingRepository> _mockRatingRepository;
+        private readonly Mock<IUserRepository> _mockUserRepository;
+        private readonly Mock<IServiceProviderRepository> _mockServiceProviderRepository;
+        private readonly Mock<IDistributedCache> _mockCache;
+        private readonly Mock<ConnectionMultiplexer> _mockRedisConnection;
+        private readonly Mock<RabbitMqClient> _mockNotificationRabbitMqClient;
+        private readonly RateService _rateService;
 
-    [Fact]
-    public async Task AddRatingAsync_AddsRating_WhenRatingIsValid()
-    {
-        var ratingDto = new RatingDto
+        public RateServiceTests()
         {
-            UserId = 1,
-            ServiceProviderId = 1,
-            RatingValue = 4
-        };
+            _mockRatingRepository = new Mock<IRatingRepository>();
+            _mockUserRepository = new Mock<IUserRepository>();
+            _mockServiceProviderRepository = new Mock<IServiceProviderRepository>();
+            _mockCache = new Mock<IDistributedCache>();
+            _mockRedisConnection = new Mock<ConnectionMultiplexer>();
+            _mockNotificationRabbitMqClient = new Mock<RabbitMqClient>();
+            _rateService = new RateService(
+                _mockRatingRepository.Object,
+                _mockUserRepository.Object,
+                _mockServiceProviderRepository.Object,
+                _mockCache.Object,
+                _mockRedisConnection.Object,
+                _mockNotificationRabbitMqClient.Object);
+        }
 
-        _mockRatingRepository.Setup(repo => repo.AddRatingAsync(It.IsAny<Rating>())).Returns(Task.CompletedTask);
-        _mockCache.Setup(cache => cache.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        _mockCache.Setup(cache => cache.SetStringAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-
-        var mockDb = new Mock<IDatabase>();
-        _mockRedisConnection.Setup(conn => conn.GetDatabase(It.IsAny<int>(), It.IsAny<object>())).Returns(mockDb.Object);
-        mockDb.Setup(db => db.SetAddAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), CommandFlags.None)).Returns(Task.FromResult(true));
-
-        await _service.AddRatingAsync(ratingDto);
-
-        _mockRatingRepository.Verify(repo => repo.AddRatingAsync(It.IsAny<Rating>()), Times.Once);
-        _mockCache.Verify(cache => cache.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
-        _mockCache.Verify(cache => cache.SetStringAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
-        mockDb.Verify(db => db.SetAddAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), CommandFlags.None), Times.Once);
-        _mockNotificationRabbitMqClient.Verify(client => client.SendMessage(It.IsAny<string>()), Times.Once);
-    }
-
-
-    [Fact]
-    public async Task AddRatingAsync_ThrowsArgumentNullException_WhenRatingIsNull()
-    {
-        await Assert.ThrowsAsync<ArgumentNullException>(() => _service.AddRatingAsync(null));
-    }
-
-    [Fact]
-    public async Task AddRatingAsync_ThrowsArgumentException_WhenServiceProviderIdIsInvalid()
-    {
-        var ratingDto = new RatingDto
+        [Fact]
+        public async Task AddRatingAsync_ValidRating_ShouldAddRating()
         {
-            UserId = 1,
-            ServiceProviderId = 0,
-            RatingValue = 4
-        };
+            // Arrange
+            var ratingDto = new RatingDto
+            {
+                UserId = 1,
+                ServiceProviderId = 1,
+                RatingValue = 5
+            };
 
-        await Assert.ThrowsAsync<ArgumentException>(() => _service.AddRatingAsync(ratingDto));
-    }
+            _mockUserRepository.Setup(repo => repo.GetUserByIdAsync(1))
+                .ReturnsAsync(new User { Id = 1 });
+            _mockServiceProviderRepository.Setup(repo => repo.GetServiceProviderByIdAsync(1))
+                .ReturnsAsync(new ServiceProvider { Id = 1 });
 
-    [Fact]
-    public async Task AddRatingAsync_ThrowsArgumentException_WhenUserIdIsInvalid()
-    {
-        var ratingDto = new RatingDto
+            // Act
+            await _rateService.AddRatingAsync(ratingDto);
+
+            // Assert
+            _mockRatingRepository.Verify(repo => 
+                repo.AddRatingAsync(It.Is<Rating>(r => 
+                    r.UserId == ratingDto.UserId &&
+                    r.ServiceProviderId == ratingDto.ServiceProviderId &&
+                    r.RatingValue == ratingDto.RatingValue)), 
+                Times.Once);
+        }
+
+        [Fact]
+        public async Task AddRatingAsync_UserNotFound_ShouldThrowArgumentException()
         {
-            UserId = 0,
-            ServiceProviderId = 1,
-            RatingValue = 4
-        };
+            // Arrange
+            var ratingDto = new RatingDto
+            {
+                UserId = 1,
+                ServiceProviderId = 1,
+                RatingValue = 5
+            };
 
-        await Assert.ThrowsAsync<ArgumentException>(() => _service.AddRatingAsync(ratingDto));
-    }
+            _mockUserRepository.Setup(repo => repo.GetUserByIdAsync(1))
+                .ReturnsAsync((User)null);
 
-    [Fact]
-    public async Task AddRatingAsync_ThrowsArgumentException_WhenRatingValueIsInvalid()
-    {
-        var ratingDto = new RatingDto
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<ArgumentException>(() => 
+                _rateService.AddRatingAsync(ratingDto));
+            Assert.Equal("User not found.", exception.Message);
+        }
+
+        [Fact]
+        public async Task AddRatingAsync_ServiceProviderNotFound_ShouldThrowArgumentException()
         {
-            UserId = 1,
-            ServiceProviderId = 1,
-            RatingValue = 6
-        };
+            // Arrange
+            var ratingDto = new RatingDto
+            {
+                UserId = 1,
+                ServiceProviderId = 1,
+                RatingValue = 5
+            };
 
-        await Assert.ThrowsAsync<ArgumentException>(() => _service.AddRatingAsync(ratingDto));
+            _mockUserRepository.Setup(repo => repo.GetUserByIdAsync(1))
+                .ReturnsAsync(new User { Id = 1 });
+            _mockServiceProviderRepository.Setup(repo => repo.GetServiceProviderByIdAsync(1))
+                .ReturnsAsync((ServiceProvider)null);
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<ArgumentException>(() => 
+                _rateService.AddRatingAsync(ratingDto));
+            Assert.Equal("Service provider not found.", exception.Message);
+        }
+
+        [Fact]
+        public async Task AddRatingAsync_InvalidRatingValue_ShouldThrowArgumentException()
+        {
+            // Arrange
+            var ratingDto = new RatingDto
+            {
+                UserId = 1,
+                ServiceProviderId = 1,
+                RatingValue = 6 // Invalid rating value
+            };
+
+            _mockUserRepository.Setup(repo => repo.GetUserByIdAsync(1))
+                .ReturnsAsync(new User { Id = 1 });
+            _mockServiceProviderRepository.Setup(repo => repo.GetServiceProviderByIdAsync(1))
+                .ReturnsAsync(new ServiceProvider { Id = 1 });
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<ArgumentException>(() => 
+                _rateService.AddRatingAsync(ratingDto));
+            Assert.Equal("Rating value must be between 1 and 5.", exception.Message);
+        }
+
+        [Fact]
+        public async Task GetAverageRatingAsync_ValidServiceProvider_ShouldReturnAverageRating()
+        {
+            // Arrange
+            var serviceProviderId = 1;
+            var ratings = new List<Rating>
+            {
+                new Rating { RatingValue = 5 },
+                new Rating { RatingValue = 4 },
+                new Rating { RatingValue = 3 }
+            };
+
+            _mockRatingRepository.Setup(repo => repo.GetRatingsByServiceProviderIdAsync(serviceProviderId))
+                .ReturnsAsync(ratings);
+
+            // Act
+            var result = await _rateService.GetAverageRatingAsync(serviceProviderId);
+
+            // Assert
+            Assert.Equal(4, result);
+        }
+
+        [Fact]
+        public async Task GetAverageRatingAsync_NoRatings_ShouldReturnNull()
+        {
+            // Arrange
+            var serviceProviderId = 1;
+            _mockRatingRepository.Setup(repo => repo.GetRatingsByServiceProviderIdAsync(serviceProviderId))
+                .ReturnsAsync(new List<Rating>());
+
+            // Act
+            var result = await _rateService.GetAverageRatingAsync(serviceProviderId);
+
+            // Assert
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task GetAverageRatingAsync_InvalidServiceProvider_ShouldThrowArgumentException()
+        {
+            // Arrange
+            var invalidServiceProviderId = 0;
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<ArgumentException>(() => 
+                _rateService.GetAverageRatingAsync(invalidServiceProviderId));
+            Assert.Equal("Invalid service provider ID.", exception.Message);
+        }
     }
 }

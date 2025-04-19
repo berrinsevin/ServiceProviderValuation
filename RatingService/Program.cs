@@ -7,6 +7,9 @@ using ServiceProviderRatingNuget.DataAccess;
 using ServiceProviderRatingNuget.Extensions;
 using RatingService.Infrastructure.Messaging;
 using ServiceProviderRatingNuget.DataAccess.Repositories;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using HealthChecks.UI.Client;
+using AspNetCoreRateLimit;
 
 internal class Program
 {
@@ -51,6 +54,32 @@ internal class Program
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
 
+        // Add Health Checks
+        builder.Services.AddHealthChecks()
+            .AddSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
+            .AddRedis(builder.Configuration.GetConnectionString("RedisConnection"))
+            .AddRabbitMQ(
+                rabbitConnectionString: $"amqp://{builder.Configuration["RabbitMq:UserName"]}:{builder.Configuration["RabbitMq:Password"]}@{builder.Configuration["RabbitMq:HostName"]}");
+
+        // Add CORS
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("AllowAll",
+                builder => builder
+                    .AllowAnyOrigin()
+                    .AllowAnyMethod()
+                    .AllowAnyHeader());
+        });
+
+        // Add Rate Limiting
+        builder.Services.AddMemoryCache();
+        builder.Services.Configure<IpRateLimitOptions>(builder.Configuration.GetSection("IpRateLimiting"));
+        builder.Services.AddSingleton<IIpPolicyStore, MemoryCacheIpPolicyStore>();
+        builder.Services.AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>();
+        builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
+        builder.Services.AddSingleton<IProcessingStrategy, AsyncKeyLockProcessingStrategy>();
+        builder.Services.AddInMemoryRateLimiting();
+
         // Dependency Injection for Repositories
         builder.Services.AddScoped<IRatingRepository, RatingRepository>();
         builder.Services.AddScoped<IServiceProviderRepository, ServiceProviderRepository>();
@@ -78,7 +107,19 @@ internal class Program
             app.UseSwaggerUI();
         }
 
+        // Use CORS
+        app.UseCors("AllowAll");
+
+        // Use Rate Limiting
+        app.UseIpRateLimiting();
+
         app.UseExceptionHandling();
+
+        // Use Health Checks
+        app.UseHealthChecks("/health", new HealthCheckOptions
+        {
+            ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+        });
 
         app.UseHttpsRedirection();
 

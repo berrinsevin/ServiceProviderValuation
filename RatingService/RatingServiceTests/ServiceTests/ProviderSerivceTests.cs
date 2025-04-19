@@ -4,98 +4,157 @@ using RatingService.Business.Services;
 using ServiceProviderRatingNuget.Domain.Entities;
 using ServiceProviderRatingNuget.DataAccess.Repositories;
 
-public class ProviderServiceTests
+namespace RatingService.Tests
 {
-    private readonly Mock<IServiceProviderRepository> _mockProviderRepository;
-    private readonly ProviderService _service;
-
-    public ProviderServiceTests()
+    public class ProviderServiceTests
     {
-        _mockProviderRepository = new Mock<IServiceProviderRepository>();
-        _service = new ProviderService(_mockProviderRepository.Object);
-    }
+        private readonly Mock<IServiceProviderRepository> _mockServiceProviderRepository;
+        private readonly ProviderService _providerService;
 
-    [Fact]
-    public async Task GetProvidersAsync_ReturnsProviders()
-    {
-        var providers = new List<Provider> { new Provider { Id = 1, Name = "Provider1" } };
-        _mockProviderRepository.Setup(repo => repo.GetProvidersAsync()).ReturnsAsync(providers);
+        public ProviderServiceTests()
+        {
+            _mockServiceProviderRepository = new Mock<IServiceProviderRepository>();
+            _providerService = new ProviderService(_mockServiceProviderRepository.Object);
+        }
 
-        var result = await _service.GetProvidersAsync();
+        [Fact]
+        public async Task GetServiceProviderAsync_ValidId_ShouldReturnServiceProvider()
+        {
+            // Arrange
+            var serviceProviderId = 1;
+            var serviceProvider = new ServiceProvider
+            {
+                Id = serviceProviderId,
+                Name = "Test Provider",
+                Description = "Test Description"
+            };
 
-        Assert.NotNull(result);
-        Assert.Single(result);
-    }
+            _mockServiceProviderRepository
+                .Setup(repo => repo.GetServiceProviderByIdAsync(serviceProviderId))
+                .ReturnsAsync(serviceProvider);
 
-    [Fact]
-    public async Task GetProviderByIdAsync_ReturnsProvider_WhenProviderExists()
-    {
-        var provider = new Provider { Id = 1, Name = "Provider1" };
-        _mockProviderRepository.Setup(repo => repo.GetProviderByIdAsync(1)).ReturnsAsync(provider);
+            // Act
+            var result = await _providerService.GetServiceProviderAsync(serviceProviderId);
 
-        var result = await _service.GetProviderByIdAsync(1);
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(serviceProviderId, result.Id);
+            Assert.Equal(serviceProvider.Name, result.Name);
+            Assert.Equal(serviceProvider.Description, result.Description);
+        }
 
-        Assert.NotNull(result);
-        Assert.Equal(provider.Id, result.Id);
-    }
+        [Fact]
+        public async Task GetServiceProviderAsync_InvalidId_ShouldThrowArgumentException()
+        {
+            // Arrange
+            var invalidId = 0;
 
-    [Fact]
-    public async Task GetProviderByIdAsync_ThrowsArgumentException_WhenIdIsInvalid()
-    {
-        await Assert.ThrowsAsync<ArgumentException>(() => _service.GetProviderByIdAsync(0));
-    }
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<ArgumentException>(() => 
+                _providerService.GetServiceProviderAsync(invalidId));
+            Assert.Equal("Invalid service provider ID.", exception.Message);
+        }
 
-    [Fact]
-    public async Task AddProviderAsync_AddsProvider_WhenProviderIsValid()
-    {
-        var providerDto = new ProviderDto { Name = "NewProvider" };
-        _mockProviderRepository.Setup(repo => repo.IsProviderWithSameNameExistsAsync(providerDto.Name)).ReturnsAsync(false);
+        [Fact]
+        public async Task GetServiceProviderAsync_NotFound_ShouldReturnNull()
+        {
+            // Arrange
+            var serviceProviderId = 1;
+            _mockServiceProviderRepository
+                .Setup(repo => repo.GetServiceProviderByIdAsync(serviceProviderId))
+                .ReturnsAsync((ServiceProvider)null);
 
-        await _service.AddProviderAsync(providerDto);
+            // Act
+            var result = await _providerService.GetServiceProviderAsync(serviceProviderId);
 
-        _mockProviderRepository.Verify(repo => repo.AddProviderAsync(It.IsAny<Provider>()), Times.Once);
-    }
+            // Assert
+            Assert.Null(result);
+        }
 
-    [Fact]
-    public async Task AddProviderAsync_ThrowsInvalidOperationException_WhenProviderExists()
-    {
-        var providerDto = new ProviderDto { Name = "ExistingProvider" };
-        _mockProviderRepository.Setup(repo => repo.IsProviderWithSameNameExistsAsync(providerDto.Name)).ReturnsAsync(true);
+        [Fact]
+        public async Task AddServiceProviderAsync_ValidProvider_ShouldAddProvider()
+        {
+            // Arrange
+            var serviceProviderDto = new ServiceProviderDto
+            {
+                Name = "Test Provider",
+                Description = "Test Description"
+            };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => _service.AddProviderAsync(providerDto));
-    }
+            // Act
+            await _providerService.AddServiceProviderAsync(serviceProviderDto);
 
-    [Fact]
-    public async Task UpdateProviderAsync_UpdatesProvider_WhenProviderIsValid()
-    {
-        var provider = new Provider { Id = 1, Name = "UpdatedProvider" };
-        _mockProviderRepository.Setup(repo => repo.UpdateProviderAsync(It.IsAny<Provider>())).Returns(Task.CompletedTask);
+            // Assert
+            _mockServiceProviderRepository.Verify(repo => 
+                repo.AddServiceProviderAsync(It.Is<ServiceProvider>(p => 
+                    p.Name == serviceProviderDto.Name &&
+                    p.Description == serviceProviderDto.Description)), 
+                Times.Once);
+        }
 
-        await _service.UpdateProviderAsync(provider);
+        [Fact]
+        public async Task AddServiceProviderAsync_NullProvider_ShouldThrowArgumentNullException()
+        {
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<ArgumentNullException>(() => 
+                _providerService.AddServiceProviderAsync(null));
+            Assert.Equal("Service provider cannot be null. (Parameter 'serviceProvider')", exception.Message);
+        }
 
-        _mockProviderRepository.Verify(repo => repo.UpdateProviderAsync(It.IsAny<Provider>()), Times.Once);
-    }
+        [Fact]
+        public async Task AddServiceProviderAsync_InvalidProvider_ShouldThrowArgumentException()
+        {
+            // Arrange
+            var invalidProvider = new ServiceProviderDto
+            {
+                Name = "", // Invalid name
+                Description = "Test Description"
+            };
 
-    [Fact]
-    public async Task UpdateProviderAsync_ThrowsArgumentNullException_WhenProviderIsNull()
-    {
-        await Assert.ThrowsAsync<ArgumentNullException>(() => _service.UpdateProviderAsync(null));
-    }
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<ArgumentException>(() => 
+                _providerService.AddServiceProviderAsync(invalidProvider));
+            Assert.Equal("Service provider name cannot be empty.", exception.Message);
+        }
 
-    [Fact]
-    public async Task DeleteProviderAsync_DeletesProvider_WhenProviderExists()
-    {
-        var providerId = 1;
-        _mockProviderRepository.Setup(repo => repo.DeleteProviderAsync(providerId)).Returns(Task.CompletedTask);
+        [Fact]
+        public async Task GetAllServiceProvidersAsync_ShouldReturnAllProviders()
+        {
+            // Arrange
+            var serviceProviders = new List<ServiceProvider>
+            {
+                new ServiceProvider { Id = 1, Name = "Provider 1", Description = "Description 1" },
+                new ServiceProvider { Id = 2, Name = "Provider 2", Description = "Description 2" }
+            };
 
-        await _service.DeleteProviderAsync(providerId);
+            _mockServiceProviderRepository
+                .Setup(repo => repo.GetAllServiceProvidersAsync())
+                .ReturnsAsync(serviceProviders);
 
-        _mockProviderRepository.Verify(repo => repo.DeleteProviderAsync(providerId), Times.Once);
-    }
+            // Act
+            var result = await _providerService.GetAllServiceProvidersAsync();
 
-    [Fact]
-    public async Task DeleteProviderAsync_ThrowsArgumentException_WhenIdIsInvalid()
-    {
-        await Assert.ThrowsAsync<ArgumentException>(() => _service.DeleteProviderAsync(0));
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(2, result.Count());
+            Assert.Equal(serviceProviders[0].Name, result.First().Name);
+            Assert.Equal(serviceProviders[1].Name, result.Last().Name);
+        }
+
+        [Fact]
+        public async Task GetAllServiceProvidersAsync_NoProviders_ShouldReturnEmptyList()
+        {
+            // Arrange
+            _mockServiceProviderRepository
+                .Setup(repo => repo.GetAllServiceProvidersAsync())
+                .ReturnsAsync(new List<ServiceProvider>());
+
+            // Act
+            var result = await _providerService.GetAllServiceProvidersAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
     }
 }
